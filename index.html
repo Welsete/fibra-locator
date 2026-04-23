@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#F47920"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Fibra Locator"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="icon" type="image/svg+xml" href="icon.svg"/>
+  <link rel="apple-touch-icon" href="icon.svg"/>
+  <script>
+    if ('serviceWorker' in navigator) {
+      let newWorker = null;
+
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+
+          // Check for updates every 60 seconds
+          setInterval(() => reg.update(), 60000);
+
+          // New SW waiting = update available
+          reg.addEventListener('updatefound', () => {
+            newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                document.getElementById('update-toast').classList.add('visible');
+              }
+            });
+          });
+        });
+
+        // After SW takes control, reload to apply update
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          window.location.reload();
+        });
+      });
+    }
+
+    function applyUpdate() {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg && reg.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      });
+    }
+  </script>
+  <title>Localizador de Fibra · ICOMON / VIVO</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f0f1a; color: #f0f0ff; font-family: 'Courier New', monospace; min-height: 100vh; padding-bottom: 60px; }
+
+    /* ── Header ── */
+    #header { background: linear-gradient(135deg, #1a1a2e 0%, #0d0d22 100%); border-bottom: 2px solid #F47920; padding: 18px 20px 14px; margin-bottom: 24px; }
+    #header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .badge { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 3px; letter-spacing: 1px; color: #fff; }
+    .badge-icomon { background: #F47920; }
+    .badge-vivo   { background: #660099; }
+    #header h1  { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; margin: 5px 0 3px; }
+    #header .sub { font-size: 10px; color: #bbbbdd; letter-spacing: 2px; }
+    .header-icon { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #F47920, #660099); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+
+    /* ── Layout ── */
+    #main { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+    .section { margin-bottom: 22px; }
+    .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .section-bar   { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+    .section-label { font-size: 10px; letter-spacing: 3px; font-weight: 700; }
+
+    .card { background: #1e1e35; border: 1px solid #3a3a5a; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .card-sp { border-left: 3px solid #F47920; }
+
+    /* ── Inputs ── */
+    input[type=number], select {
+      background: #0d0d20; border: 1px solid #3a3a5a; border-radius: 6px;
+      color: #f0f0ff; padding: 9px 10px; font-family: 'Courier New', monospace;
+      font-size: 13px; width: 100%; outline: none; transition: border-color 0.2s;
+    }
+    input[type=number] { -moz-appearance: textfield; }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type=number]::placeholder { color: #5a5a7a; }
+    input:focus, select:focus { border-color: #F47920; }
+    select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+    select option { background: #1e1e35; color: #f0f0ff; }
+    .input-large { font-size: 22px !important; padding: 14px !important; text-align: center; font-weight: 700; }
+    .field-label { font-size: 10px; color: #ccccee; margin-bottom: 5px; font-weight: 700; letter-spacing: 1px; }
+    .field-row { display: flex; gap: 8px; }
+    .field-row > div { flex: 1; }
+    .select-wrap { position: relative; }
+    .select-wrap::after { content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #aaaacc; pointer-events: none; }
+
+    /* ── Buttons ── */
+    button { cursor: pointer; font-family: 'Courier New', monospace; }
+    .btn-search { background: linear-gradient(135deg, #F47920, #660099); border: none; border-radius: 8px; color: #fff; padding: 15px; width: 100%; font-weight: 700; font-size: 14px; letter-spacing: 3px; }
+    .btn-add    { background: none; border: 1px dashed #660099; border-radius: 8px; color: #cc77ff; padding: 11px; width: 100%; font-size: 12px; letter-spacing: 1px; font-weight: 700; }
+    .btn-remove { background: none; border: none; color: #ff6666; font-size: 18px; padding: 0; line-height: 1; }
+    .btn-clear  { background: none; border: none; color: #bbbbdd; font-size: 11px; font-weight: 700; text-decoration: underline; }
+
+    /* ── Color chips ── */
+    .color-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cor-btn { border-radius: 6px; padding: 6px 11px; font-size: 12px; font-family: 'Courier New', monospace; border: 2px solid #3a3a5a; background: #1e1e35; color: #ddddff; font-weight: 600; transition: all 0.15s; }
+    .cor-btn.selected { font-weight: 700; }
+    .cor-tag  { border-radius: 4px; padding: 3px 9px; font-size: 11px; font-weight: 700; display: inline-block; }
+
+    /* ── SP card ── */
+    .sp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .sp-label  { font-size: 11px; letter-spacing: 2px; font-weight: 700; }
+    .sp-tags   { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 10px; }
+
+    /* ── Summary ── */
+    .summary { font-size: 11px; color: #F47920; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+
+    /* ── Result ── */
+    .result { border-radius: 10px; padding: 18px; animation: fadeIn 0.3s ease; margin-top: 4px; }
+    .result-ok  { background: #16162a; border: 1px solid #660099; border-top: 3px solid #F47920; }
+    .result-err { background: #1f0a0a; border: 1px solid #7f1d1d; border-top: 3px solid #ff4444; }
+    .result-title { font-size: 11px; letter-spacing: 2px; margin-bottom: 14px; font-weight: 700; }
+    .result-boxes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .result-box { flex: 1; min-width: 70px; background: #0d0d20; border-radius: 8px; padding: 10px; text-align: center; border: 1px solid #3a3a5a; }
+    .result-box-label { font-size: 10px; color: #bbbbdd; letter-spacing: 2px; margin-bottom: 5px; font-weight: 700; }
+    .result-box-value { font-weight: 700; font-size: 20px; color: #ffffff; }
+    .result-box-sub   { font-size: 10px; margin-top: 3px; color: #cc77ff; font-weight: 700; }
+    .cor-circle { width: 34px; height: 34px; border-radius: 50%; border: 2px solid #3a3a5a; margin: 0 auto 5px; }
+    .cor-name   { font-weight: 700; font-size: 16px; }
+
+    /* ── Signature ── */
+    #signature { max-width: 480px; margin: 32px auto 0; padding: 0 16px; }
+    .sig-card { background: #16162a; border: 1px solid #3a3a5a; border-radius: 10px; padding: 16px; border-top: 2px solid #F47920; }
+    .sig-name { font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+    .sig-title { font-size: 10px; color: #aaaacc; letter-spacing: 2px; margin-bottom: 14px; }
+    .sig-links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sig-link { display: flex; align-items: center; gap: 6px; background: #0d0d20; border: 1px solid #3a3a5a; border-radius: 6px; padding: 7px 11px; text-decoration: none; color: #ddddff; font-size: 11px; font-weight: 700; transition: border-color 0.2s; }
+    .sig-link:hover { border-color: #F47920; color: #F47920; }
+    .sig-link .icon { font-size: 14px; }
+
+    
+
+    /* Update toast */
+    #update-toast {
+      display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #F47920, #660099);
+      color: #fff; border-radius: 12px; padding: 14px 20px;
+      font-size: 12px; font-weight: 700; letter-spacing: 1px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      z-index: 9999; width: calc(100% - 32px); max-width: 480px;
+      display: none; align-items: center; justify-content: space-between; gap: 12px;
+      animation: slideUp 0.3s ease;
+    }
+    #update-toast.visible { display: flex; }
+    #update-toast .toast-text { flex: 1; line-height: 1.4; }
+    #update-toast .toast-btn {
+      background: #fff; color: #F47920; border: none; border-radius: 6px;
+      padding: 8px 14px; font-family: 'Courier New', monospace;
+      font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    @keyframes slideUp { from { opacity:0; transform: translateX(-50%) translateY(20px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+    /* Install button */
+    #btn-install-wrap { display: none; margin-bottom: 20px; }
+    #btn-install-wrap.visible { display: block; }
+    .btn-install {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer;
+      background: linear-gradient(135deg, #F47920, #660099);
+      color: #fff; font-family: 'Courier New', monospace; font-size: 13px;
+      font-weight: 700; letter-spacing: 2px; position: relative; overflow: hidden;
+      animation: pulse 2s infinite;
+    }
+    .btn-install:active { opacity: 0.85; transform: scale(0.98); }
+    .btn-install .install-icon { font-size: 18px; }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(244,121,32,0.4); }
+      50%       { box-shadow: 0 0 0 8px rgba(244,121,32,0); }
+    }
+    .installed-badge {
+      display: none; align-items: center; justify-content: center; gap: 8px;
+      background: #0f1a0f; border: 1px solid #166534; border-radius: 10px;
+      padding: 12px; color: #86efac; font-size: 12px; font-weight: 700;
+    }
+    .installed-badge.visible { display: flex; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <div id="header-inner">
+    <div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="badge badge-icomon">ICOMON</span>
+        <span class="badge badge-vivo">VIVO</span>
+      </div>
+      <h1>Localizador de Fibra</h1>
+      <div class="sub">DGOIC · SS · ANILHA · COR</div>
+    </div>
+    <div class="header-icon">🔦</div>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- Cores da Caixa -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-bar" style="background:#F47920"></div>
+      <div class="section-label" style="color:#F47920">CORES DA CAIXA</div>
+    </div>
+    <div class="card">
+      <div class="color-grid" id="cor-grid"></div>
+      <div class="summary" id="cor-summary" style="display:none">
+        <span id="cor-sequence"></span>
+        <button class="btn-clear" onclick="clearCores()">limpar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Splice Points -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-bar" style="background:#660099"></div>
+      <div class="section-label" style="color:#cc77ff">SPLICE POINTS</div>
+    </div>
+    <div id="sp-list"></div>
+    <button class="btn-add" id="btn-add-sp" onclick="addSP()">+ Adicionar Primária</button>
+  </div>
+
+  <!-- Busca -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-bar" style="background:#F47920"></div>
+      <div class="section-label" style="color:#F47920">BUSCA</div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="field-label">Fibra Designada</div>
+      <input type="number" id="fd-input" class="input-large" placeholder="Ex: 23" min="1" max="64" onkeydown="if(event.key==='Enter') buscar()"/>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="field-label">Splice Point</div>
+      <div class="select-wrap">
+        <select id="sp-select">
+          <option value="">— selecione o SP —</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-search" onclick="buscar()">BUSCAR</button>
+  </div>
+
+  <div id="resultado" style="display:none"></div>
+
+  <!-- Install Button -->
+  <div id="btn-install-wrap">
+    <button class="btn-install" id="btn-install" onclick="installApp()">
+      <span class="install-icon">📲</span> INSTALAR APP
+    </button>
+    <div class="installed-badge" id="installed-badge">
+      ✅ App instalado com sucesso!
+    </div>
+  </div>
+
+  <!-- Tutorial link -->
+  <div style="margin-bottom:20px">
+    <a href="tutorial.html" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#1e1e35;border:1px dashed #3a3a5a;border-radius:8px;padding:12px;color:#aaaacc;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:1px">
+      📲 COMO INSTALAR COMO APP
+    </a>
+  </div>
+</div>
+
+<!-- Signature -->
+<div id="signature">
+  <div class="sig-card">
+    <div class="sig-name">Wellerson</div>
+    <div class="sig-title">TÉCNICO DE FIBRA ÓPTICA · ICOMON / VIVO</div>
+    <div class="sig-links">
+      <a class="sig-link" href="https://github.com/welsete" target="_blank">
+        <span class="icon">🐙</span> github.com/welsete
+      </a>
+      <a class="sig-link" href="https://instagram.com/welsete" target="_blank">
+        <span class="icon">📸</span> @welsete
+      </a>
+      <a class="sig-link" href="https://linkedin.com/in/welsete" target="_blank">
+        <span class="icon">💼</span> linkedin.com/in/welsete
+      </a>
+      <a class="sig-link" href="tel:+5511942051451">
+        <span class="icon">📞</span> (11) 94205-1451
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+const CORES = ["VD","AM","BR","AZ","VM","VL","MR","RS","PT","CZ","LR","A.MAR"];
+const COR_VISUAL = { VD:"#22c55e",AM:"#eab308",BR:"#d1d5db",AZ:"#3b82f6",VM:"#ef4444",VL:"#a855f7",MR:"#92400e",RS:"#ec4899",PT:"#6b7280",CZ:"#9ca3af",LR:"#f97316","A.MAR":"#1e40af" };
+const COR_TEXT   = { VD:"#fff",AM:"#000",BR:"#000",AZ:"#fff",VM:"#fff",VL:"#fff",MR:"#fff",RS:"#fff",PT:"#fff",CZ:"#000",LR:"#000","A.MAR":"#fff" };
+
+let selectedIdxs = new Set();
+
+// ── Colors ────────────────────────────────────────────────────
+function getCaixaCores() {
+  return [...selectedIdxs].sort((a,b)=>a-b).map(i=>CORES[i]);
+}
+
+function toggleCor(idx) {
+  selectedIdxs.has(idx) ? selectedIdxs.delete(idx) : selectedIdxs.add(idx);
+  renderCores();
+  refreshAllColorTags();
+  clearResultado();
+}
+
+function clearCores() {
+  selectedIdxs = new Set();
+  renderCores();
+  refreshAllColorTags();
+  clearResultado();
+}
+
+function renderCores() {
+  const grid = document.getElementById('cor-grid');
+  grid.innerHTML = '';
+  CORES.forEach((cor, idx) => {
+    const sel = selectedIdxs.has(idx);
+    const btn = document.createElement('button');
+    btn.className = 'cor-btn' + (sel ? ' selected' : '');
+    btn.textContent = cor;
+    btn.style.background  = sel ? COR_VISUAL[cor] : '#1e1e35';
+    btn.style.borderColor = sel ? COR_VISUAL[cor] : '#3a3a5a';
+    btn.style.color       = sel ? COR_TEXT[cor]   : '#ddddff';
+    btn.onclick = () => toggleCor(idx);
+    grid.appendChild(btn);
+  });
+  const caixaCores = getCaixaCores();
+  const summary = document.getElementById('cor-summary');
+  if (caixaCores.length > 0) {
+    summary.style.display = 'flex';
+    document.getElementById('cor-sequence').textContent =
+      caixaCores.join(' › ') + ' · ' + (caixaCores.length * 8) + ' fibras';
+  } else {
+    summary.style.display = 'none';
+  }
+}
+
+// ── SP management ─────────────────────────────────────────────
+function readSPsFromDOM() {
+  const result = [];
+  document.querySelectorAll('.sp-card').forEach(card => {
+    const inputs = card.querySelectorAll('input[type=number]');
+    result.push({ sp: inputs[0]?.value||'', start: inputs[1]?.value||'', end: inputs[2]?.value||'' });
+  });
+  return result;
+}
+
+function getSpData() {
+  const sps = readSPsFromDOM();
+  const caixaCores = getCaixaCores();
+  let offset = 0;
+  return sps.map((sp, i) => {
+    const start = parseInt(sp.start)||0, end = parseInt(sp.end)||0;
+    const numGroups = (start>0 && end>=start) ? Math.ceil((end-start+1)/8) : 0;
+    const colors = caixaCores.slice(offset, offset+numGroups);
+    offset += numGroups;
+    return { ...sp, start, end, numGroups, colors, label: `Primária ${i+1}` };
+  });
+}
+
+function refreshAllColorTags() {
+  getSpData().forEach((sp, i) => {
+    const el = document.getElementById(`sp-tags-${i}`);
+    if (!el) return;
+    el.innerHTML = sp.colors.map(cor =>
+      `<span class="cor-tag" style="background:${COR_VISUAL[cor]};color:${COR_TEXT[cor]}">${cor}</span>`
+    ).join('');
+  });
+  updateSPSelect();
+}
+
+function updateSPSelect() {
+  const sel = document.getElementById('sp-select');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— selecione o SP —</option>';
+  readSPsFromDOM().forEach((sp, i) => {
+    if (!sp.sp) return;
+    const opt = document.createElement('option');
+    opt.value = sp.sp;
+    opt.textContent = `SP ${sp.sp} — Primária ${i+1}`;
+    if (sp.sp === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function addSP() {
+  const list = document.getElementById('sp-list');
+  const i = list.querySelectorAll('.sp-card').length;
+  if (i >= 8) return;
+  const card = document.createElement('div');
+  card.className = 'card card-sp sp-card';
+  card.innerHTML = `
+    <div class="sp-header">
+      <div class="sp-label" style="color:#F47920">PRIMÁRIA ${i+1}</div>
+      ${i > 0 ? `<button class="btn-remove" onclick="removeSP(this)">×</button>` : ''}
+    </div>
+    <div class="field-row">
+      <div>
+        <div class="field-label">Nº SP</div>
+        <input type="number" placeholder="Ex: 25" oninput="refreshAllColorTags()"/>
+      </div>
+      <div>
+        <div class="field-label">Fibra Início</div>
+        <input type="number" placeholder="Ex: 17" oninput="refreshAllColorTags()"/>
+      </div>
+      <div>
+        <div class="field-label">Fibra Fim</div>
+        <input type="number" placeholder="Ex: 56" oninput="refreshAllColorTags()"/>
+      </div>
+    </div>
+    <div class="sp-tags" id="sp-tags-${i}"></div>
+  `;
+  list.appendChild(card);
+  const btnAdd = document.getElementById('btn-add-sp');
+  btnAdd.style.display = list.querySelectorAll('.sp-card').length >= 8 ? 'none' : 'block';
+  updateBtnLabel();
+}
+
+function removeSP(btn) {
+  btn.closest('.sp-card').remove();
+  // Renumber labels and tag IDs
+  document.querySelectorAll('.sp-card').forEach((c, idx) => {
+    const lbl = c.querySelector('.sp-label');
+    if (lbl) lbl.textContent = `PRIMÁRIA ${idx+1}`;
+    const tags = c.querySelector('.sp-tags');
+    if (tags) tags.id = `sp-tags-${idx}`;
+  });
+  document.getElementById('btn-add-sp').style.display = 'block';
+  updateBtnLabel();
+  refreshAllColorTags();
+  clearResultado();
+}
+
+function updateBtnLabel() {
+  const count = document.querySelectorAll('.sp-card').length;
+  document.getElementById('btn-add-sp').textContent = `+ Adicionar Primária ${count+1}`;
+}
+
+// ── Search ────────────────────────────────────────────────────
+function getSSAnilha(fd) {
+  const ss = Math.ceil(fd/8);
+  return { ss, anilha: fd-(ss-1)*8 };
+}
+
+function buscar() {
+  const fd    = parseInt(document.getElementById('fd-input').value);
+  const spNum = parseInt(document.getElementById('sp-select').value);
+  if (!fd || fd<1 || fd>64 || !spNum) return;
+
+  const spData = getSpData();
+  const found  = spData.find(s => parseInt(s.sp)===spNum);
+  const { ss, anilha } = getSSAnilha(fd);
+  const el = document.getElementById('resultado');
+  el.style.display = 'block';
+
+  const box = (label, value, sub='', extra='') =>
+    `<div class="result-box" ${extra}>
+      <div class="result-box-label">${label}</div>
+      <div class="result-box-value">${value}</div>
+      ${sub ? `<div class="result-box-sub">${sub}</div>` : ''}
+    </div>`;
+
+  if (!found) {
+    el.innerHTML = `<div class="result result-err">
+      <div class="result-title" style="color:#ff6666">⚠ MANOBRA — FD ${fd} / SP ${spNum}</div>
+      <div class="result-boxes">
+        ${box('SS',`SS${ss}`)}
+        ${box('ANILHA',anilha)}
+        <div class="result-box" style="border:1px solid #7f1d1d;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:11px;color:#ff6666;font-weight:700">SP não configurado</span>
+        </div>
+      </div>
+    </div>`; return;
+  }
+
+  if (fd >= found.start && fd <= found.end && found.start > 0) {
+    const cor  = found.colors[Math.floor((fd-found.start)/8)] || '?';
+    const glow = COR_VISUAL[cor] || '#fff';
+    el.innerHTML = `<div class="result result-ok">
+      <div class="result-title" style="color:#F47920">✓ FD ${fd} / SP ${spNum} — ${found.label}</div>
+      <div class="result-boxes">
+        ${box('SP', spNum, found.label)}
+        ${box('SS', `SS${ss}`)}
+        ${box('ANILHA', anilha)}
+        <div class="result-box">
+          <div class="result-box-label">COR</div>
+          <div class="cor-circle" style="background:${glow};box-shadow:0 0 14px ${glow}88"></div>
+          <div class="cor-name" style="color:${glow}">${cor}</div>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    el.innerHTML = `<div class="result result-err">
+      <div class="result-title" style="color:#ff6666">⚠ MANOBRA — FD ${fd} / SP ${spNum}</div>
+      <div class="result-boxes">
+        ${box('SP', spNum, found.label)}
+        ${box('SS', `SS${ss}`)}
+        ${box('ANILHA', anilha)}
+        <div class="result-box" style="border:1px solid #7f1d1d;display:flex;align-items:center;justify-content:center">
+          <span style="font-size:11px;color:#ff6666;font-weight:700">Sem cor</span>
+        </div>
+      </div>
+    </div>`;
+  }
+}
+
+function clearResultado() {
+  const el = document.getElementById('resultado');
+  el.style.display = 'none';
+  el.innerHTML = '';
+}
+
+
+// ── PWA Install ───────────────────────────────────────────────
+let deferredPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('btn-install-wrap').classList.add('visible');
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.getElementById('btn-install-wrap').classList.remove('visible');
+  const badge = document.getElementById('installed-badge');
+  badge.classList.add('visible');
+  setTimeout(() => badge.classList.remove('visible'), 4000);
+});
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(choice => {
+    deferredPrompt = null;
+    if (choice.outcome === 'accepted') {
+      document.getElementById('btn-install-wrap').classList.remove('visible');
+    }
+  });
+}
+
+// ── Init ──────────────────────────────────────────────────────
+renderCores();
+addSP();
+</script>
+
+<!-- Update Toast -->
+<div id="update-toast">
+  <div class="toast-text">🆕 Nova versão disponível!</div>
+  <button class="toast-btn" onclick="applyUpdate()">ATUALIZAR</button>
+</div>
+</body>
+</html>
