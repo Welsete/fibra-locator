@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Como Instalar · Localizador de Fibra</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f0f1a; color: #f0f0ff; font-family: 'Courier New', monospace; min-height: 100vh; padding-bottom: 60px; }
+
+    /* Header */
+    #header { background: linear-gradient(135deg, #1a1a2e, #0d0d22); border-bottom: 2px solid #F47920; padding: 18px 20px 14px; margin-bottom: 28px; }
+    #header-inner { max-width: 560px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .badge { font-size: 9px; font-weight: 700; padding: 2px 8px; border-radius: 3px; color: #fff; }
+    .badge-icomon { background: #F47920; }
+    .badge-vivo   { background: #660099; }
+    #header h1  { font-size: 17px; font-weight: 700; color: #fff; margin: 5px 0 3px; }
+    #header .sub { font-size: 10px; color: #aaaacc; letter-spacing: 2px; }
+    .header-icon { width: 42px; height: 42px; border-radius: 50%; background: linear-gradient(135deg, #F47920, #660099); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+
+    /* Layout */
+    #main { max-width: 560px; margin: 0 auto; padding: 0 16px; }
+
+    /* Intro */
+    .intro { background: #1e1e35; border: 1px solid #3a3a5a; border-left: 3px solid #F47920; border-radius: 10px; padding: 16px; margin-bottom: 28px; font-size: 13px; color: #ccccee; line-height: 1.6; }
+    .intro strong { color: #F47920; }
+
+    /* Browser section */
+    .browser-section { margin-bottom: 28px; }
+    .browser-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #2a2a45; }
+    .browser-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .browser-name { font-size: 15px; font-weight: 700; color: #ffffff; }
+    .browser-compat { font-size: 10px; letter-spacing: 1px; margin-top: 2px; font-weight: 700; }
+    .compat-ok  { color: #22c55e; }
+    .compat-ok::before  { content: '✓ '; }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 10px; }
+    .step { display: flex; gap: 12px; align-items: flex-start; background: #16162a; border: 1px solid #2a2a45; border-radius: 8px; padding: 12px 14px; }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; color: #fff; }
+    .step-num-orange { background: #F47920; }
+    .step-num-purple { background: #660099; }
+    .step-num-blue   { background: #1d6fcc; }
+    .step-num-green  { background: #16a34a; }
+    .step-num-gray   { background: #4b5563; }
+    .step-text { font-size: 12px; color: #ddddff; line-height: 1.6; flex: 1; }
+    .step-text strong { color: #ffffff; }
+    .step-text .key { display: inline-block; background: #0d0d20; border: 1px solid #3a3a5a; border-radius: 4px; padding: 1px 6px; font-size: 11px; color: #F47920; font-weight: 700; }
+    .step-text .icon-inline { font-size: 15px; vertical-align: middle; }
+
+    /* Tip box */
+    .tip { background: #0f1a0f; border: 1px solid #166534; border-radius: 8px; padding: 12px 14px; margin-top: 10px; font-size: 11px; color: #86efac; line-height: 1.6; }
+    .tip::before { content: '💡 '; }
+
+    /* Divider */
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, #2a2a45, transparent); margin: 8px 0 20px; }
+
+    /* Platform tabs */
+    .platform-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+    .ptab { background: #1e1e35; border: 1px solid #3a3a5a; border-radius: 6px; padding: 6px 12px; font-size: 11px; font-weight: 700; color: #9999bb; cursor: pointer; transition: all 0.15s; }
+    .ptab.active { background: #F47920; border-color: #F47920; color: #fff; }
+    .platform-content { display: none; }
+    .platform-content.active { display: block; }
+
+    /* Back link */
+    .back-link { display: inline-flex; align-items: center; gap: 6px; color: #F47920; font-size: 12px; font-weight: 700; text-decoration: none; margin-bottom: 20px; }
+    .back-link:hover { color: #ff9944; }
+
+    /* Signature */
+    #signature { max-width: 560px; margin: 32px auto 0; padding: 0 16px; }
+    .sig-card { background: #16162a; border: 1px solid #3a3a5a; border-radius: 10px; padding: 16px; border-top: 2px solid #F47920; }
+    .sig-name { font-size: 14px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+    .sig-title { font-size: 10px; color: #aaaacc; letter-spacing: 2px; margin-bottom: 14px; }
+    .sig-links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sig-link { display: flex; align-items: center; gap: 6px; background: #0d0d20; border: 1px solid #3a3a5a; border-radius: 6px; padding: 7px 11px; text-decoration: none; color: #ddddff; font-size: 11px; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-inner">
+    <div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+        <span class="badge badge-icomon">ICOMON</span>
+        <span class="badge badge-vivo">VIVO</span>
+      </div>
+      <h1>Como Instalar o App</h1>
+      <div class="sub">LOCALIZADOR DE FIBRA · TUTORIAL</div>
+    </div>
+    <div class="header-icon">📲</div>
+  </div>
+</div>
+
+<div id="main">
+
+  <a class="back-link" href="index.html">← Voltar ao App</a>
+
+  <div class="intro">
+    O <strong>Localizador de Fibra</strong> pode ser instalado como um app no seu celular ou computador — sem precisar de loja de apps. Funciona <strong>offline</strong> após a primeira abertura. Escolha seu dispositivo abaixo:
+  </div>
+
+  <!-- Platform Tabs -->
+  <div class="platform-tabs">
+    <div class="ptab active" onclick="showPlatform('android')">📱 Android</div>
+    <div class="ptab" onclick="showPlatform('iphone')">🍎 iPhone</div>
+    <div class="ptab" onclick="showPlatform('windows')">💻 Windows</div>
+    <div class="ptab" onclick="showPlatform('mac')">🖥️ Mac</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       ANDROID
+  ════════════════════════════════════════════════════ -->
+  <div class="platform-content active" id="platform-android">
+
+    <!-- Chrome Android -->
+    <div class="browser-section">
+      <div class="browser-header">
+        <div class="browser-icon" style="background:#1a2a1a">🟢</div>
+        <div>
+          <div class="browser-name">Google Chrome</div>
+          <div class="browser-compat compat-ok">Totalmente compatível</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num step-num-orange">1</div>
+          <div class="step-text">Abra o site no Chrome e aguarde carregar completamente</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">2</div>
+          <div class="step-text">Toque no menu <span class="key">⋮</span> (três pontos) no canto superior direito</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">3</div>
+          <div class="step-text">Toque em <strong>"Adicionar à tela inicial"</strong> ou <strong>"Instalar app"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">4</div>
+          <div class="step-text">Confirme tocando em <strong>"Adicionar"</strong> ou <strong>"Instalar"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">5</div>
+          <div class="step-text">O ícone do app aparece na tela inicial. Pronto! ✅</div>
+        </div>
+      </div>
+      <div class="tip">Na próxima vez que abrir, o app já funciona sem internet.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Edge Android -->
+    <div class="browser-section">
+      <div class="browser-header">
+        <div class="browser-icon" style="background:#1a1a2e">🔵</div>
+        <div>
+          <div class="browser-name">Microsoft Edge</div>
+          <div class="browser-compat compat-ok">Totalmente compatível</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num step-num-blue">1</div>
+          <div class="step-text">Abra o site no Edge</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-blue">2</div>
+          <div class="step-text">Toque no menu <span class="key">···</span> (três pontos) na parte inferior da tela</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-blue">3</div>
+          <div class="step-text">Selecione <strong>"Adicionar à tela inicial"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-blue">4</div>
+          <div class="step-text">Confirme e o ícone aparece na tela inicial ✅</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Firefox Android -->
+    <div class="browser-section">
+      <div class="browser-header">
+        <div class="browser-icon" style="background:#2a1a0a">🦊</div>
+        <div>
+          <div class="browser-name">Firefox</div>
+          <div class="browser-compat compat-ok">Compatível</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num step-num-gray">1</div>
+          <div class="step-text">Abra o site no Firefox</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-gray">2</div>
+          <div class="step-text">Toque no menu <span class="key">⋮</span> e selecione <strong>"Instalar"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-gray">3</div>
+          <div class="step-text">Confirme a instalação ✅</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /android -->
+
+  <!-- ═══════════════════════════════════════════════════
+       IPHONE
+  ════════════════════════════════════════════════════ -->
+  <div class="platform-content" id="platform-iphone">
+
+    <!-- Safari iOS -->
+    <div class="browser-section">
+      <div class="browser-header">
+        <div class="browser-icon" style="background:#0a1a2a">🧭</div>
+        <div>
+          <div class="browser-name">Safari (obrigatório no iPhone)</div>
+          <div class="browser-compat compat-ok">Use o Safari para instalar</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num step-num-purple">1</div>
+          <div class="step-text"><strong>Abra o site no Safari</strong> — no iPhone, só o Safari consegue instalar apps na tela inicial</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-purple">2</div>
+          <div class="step-text">Toque no ícone de <strong>compartilhar</strong> <span class="icon-inline">⬆️</span> na barra inferior</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-purple">3</div>
+          <div class="step-text">Role a lista e toque em <strong>"Adicionar à Tela de Início"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-purple">4</div>
+          <div class="step-text">Altere o nome se quiser e toque em <strong>"Adicionar"</strong> no canto superior direito</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-purple">5</div>
+          <div class="step-text">O ícone aparece na tela inicial igual a um app nativo ✅</div>
+        </div>
+      </div>
+      <div class="tip">No iPhone, Chrome e Edge não permitem instalar — use sempre o Safari para isso.</div>
+    </div>
+
+  </div><!-- /iphone -->
+
+  <!-- ═══════════════════════════════════════════════════
+       WINDOWS
+  ════════════════════════════════════════════════════ -->
+  <div class="platform-content" id="platform-windows">
+
+    <!-- Chrome Windows -->
+    <div class="browser-section">
+      <div class="browser-header">
+        <div class="browser-icon" style="background:#1a2a1a">🟢</div>
+        <div>
+          <div class="browser-name">Google Chrome</div>
+          <div class="browser-compat compat-ok">Totalmente compatível</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num step-num-orange">1</div>
+          <div class="step-text">Abra o site no Chrome</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">2</div>
+          <div class="step-text">Clique no ícone de <strong>instalar</strong> <span class="key">⊕</span> que aparece na barra de endereço (lado direito)</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">3</div>
+          <div class="step-text">Clique em <strong>"Instalar"</strong> na janela que aparecer</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">4</div>
+          <div class="step-text">O app abre numa janela própria e cria atalho na área de trabalho ✅</div>
+        </div>
+      </div>
+      <div class="tip">Se o ícone não aparecer na barra, clique em <span class="key">⋮</span> → <strong>Salvar e compartilhar</strong> → <strong>Criar atalho</strong>.</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Edge Windows -->
+    <div class="browser-section">
+      <div class="browser-header">
+        <div class="browser-icon" style="background:#1a1a2e">🔵</div>
+        <div>
+          <div class="browser-name">Microsoft Edge</div>
+          <div class="browser-compat compat-ok">Totalmente compatível</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num step-num-blue">1</div>
+          <div class="step-text">Abra o site no Edge</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-blue">2</div>
+          <div class="step-text">Clique nos <span class="key">···</span> (três pontos) no canto superior direito</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-blue">3</div>
+          <div class="step-text">Vá em <strong>"Aplicativos"</strong> → <strong>"Instalar este site como um aplicativo"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-blue">4</div>
+          <div class="step-text">Clique em <strong>"Instalar"</strong> ✅</div>
+        </div>
+      </div>
+      <div class="tip">O Edge é o melhor navegador para instalar PWAs no Windows — integra direto com o Menu Iniciar.</div>
+    </div>
+
+  </div><!-- /windows -->
+
+  <!-- ═══════════════════════════════════════════════════
+       MAC
+  ════════════════════════════════════════════════════ -->
+  <div class="platform-content" id="platform-mac">
+
+    <!-- Chrome Mac -->
+    <div class="browser-section">
+      <div class="browser-header">
+        <div class="browser-icon" style="background:#1a2a1a">🟢</div>
+        <div>
+          <div class="browser-name">Google Chrome</div>
+          <div class="browser-compat compat-ok">Totalmente compatível</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num step-num-orange">1</div>
+          <div class="step-text">Abra o site no Chrome</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">2</div>
+          <div class="step-text">Clique no ícone <span class="key">⊕</span> na barra de endereço</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-orange">3</div>
+          <div class="step-text">Clique em <strong>"Instalar"</strong> — o app aparece no Launchpad ✅</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Safari Mac -->
+    <div class="browser-section">
+      <div class="browser-header">
+        <div class="browser-icon" style="background:#0a1a2a">🧭</div>
+        <div>
+          <div class="browser-name">Safari (macOS Sonoma+)</div>
+          <div class="browser-compat compat-ok">Compatível no macOS 14+</div>
+        </div>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num step-num-purple">1</div>
+          <div class="step-text">Abra o site no Safari</div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-purple">2</div>
+          <div class="step-text">No menu superior: <strong>Arquivo</strong> → <strong>"Adicionar ao Dock"</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num step-num-purple">3</div>
+          <div class="step-text">Clique em <strong>"Adicionar"</strong> — o ícone aparece no Dock ✅</div>
+        </div>
+      </div>
+      <div class="tip">Requer macOS Sonoma (14) ou mais recente.</div>
+    </div>
+
+  </div><!-- /mac -->
+
+</div><!-- /main -->
+
+<!-- Signature -->
+<div id="signature">
+  <div class="sig-card">
+    <div class="sig-name">Wellerson</div>
+    <div class="sig-title">TÉCNICO DE FIBRA ÓPTICA · ICOMON / VIVO</div>
+    <div class="sig-links">
+      <a class="sig-link" href="https://github.com/welsete" target="_blank">🐙 github.com/welsete</a>
+      <a class="sig-link" href="https://instagram.com/welsete" target="_blank">📸 @welsete</a>
+      <a class="sig-link" href="https://linkedin.com/in/welsete" target="_blank">💼 linkedin.com/in/welsete</a>
+      <a class="sig-link" href="tel:+5511942051451">📞 (11) 94205-1451</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPlatform(id) {
+  document.querySelectorAll('.platform-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(el => el.classList.remove('active'));
+  document.getElementById('platform-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Auto-detect platform
+const ua = navigator.userAgent;
+if (/iPhone|iPad/.test(ua)) showPlatform('iphone');
+else if (/Android/.test(ua)) showPlatform('android');
+else if (/Mac/.test(ua)) showPlatform('mac');
+// else stays on Windows (default)
+</script>
+
+</body>
+</html>
