@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#0f0f1a"/>
+  <title>Localizador de Fibra · ICOMON / VIVO</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0f0f1a; color: #e0e0f0; font-family: 'Courier New', monospace; min-height: 100vh; padding-bottom: 40px; }
+
+    /* Header */
+    #header { background: linear-gradient(135deg, #1A1A2E 0%, #0d0d22 100%); border-bottom: 2px solid #F47920; padding: 18px 20px 14px; margin-bottom: 24px; }
+    #header-inner { max-width: 480px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 1px; color: #fff; }
+    .badge-icomon { background: #F47920; }
+    .badge-vivo   { background: #660099; }
+    #header h1    { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: 1px; margin: 4px 0 2px; }
+    #header .sub  { font-size: 10px; color: #6b6b9a; letter-spacing: 2px; }
+    .header-icon  { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #F47920, #660099); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+
+    /* Main */
+    #main { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+    /* Section */
+    .section { margin-bottom: 20px; }
+    .section-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .section-bar { width: 3px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+    .section-label { font-size: 10px; letter-spacing: 3px; }
+
+    /* Card */
+    .card { background: #1e1e35; border: 1px solid #2a2a45; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+    .card-primary { border-left: 3px solid #F47920; }
+    .card-secondary { border-left: 3px solid #9933CC; }
+
+    /* Inputs */
+    input[type=number] {
+      background: #0a0a18; border: 1px solid #2a2a45; border-radius: 6px;
+      color: #e0e0f0; padding: 8px 10px; font-family: 'Courier New', monospace;
+      font-size: 13px; width: 100%; outline: none; transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type=number]::placeholder { color: #3a3a5a; }
+    input[type=number]:focus { border-color: #F47920; }
+    .input-large { font-size: 18px !important; padding: 13px 14px !important; text-align: center; }
+    .field-label { font-size: 9px; color: #6b6b9a; margin-bottom: 4px; }
+    .field-row { display: flex; gap: 8px; }
+    .field-row > div { flex: 1; }
+
+    /* Buttons */
+    button { cursor: pointer; font-family: 'Courier New', monospace; }
+    .btn-search {
+      background: linear-gradient(135deg, #F47920, #660099);
+      border: none; border-radius: 8px; color: #fff; padding: 14px;
+      width: 100%; font-weight: 700; font-size: 13px; letter-spacing: 3px;
+    }
+    .btn-add {
+      background: none; border: 1px dashed #660099; border-radius: 8px;
+      color: #9933CC; padding: 10px; width: 100%; font-size: 12px; letter-spacing: 1px;
+    }
+    .btn-remove { background: none; border: none; color: #ef4444; font-size: 16px; padding: 0; }
+    .btn-clear { background: none; border: none; color: #6b6b9a; font-size: 10px; }
+
+    /* Color chips */
+    .color-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cor-btn {
+      border-radius: 6px; padding: 5px 10px; font-size: 11px;
+      font-family: 'Courier New', monospace; border: 2px solid #2a2a45;
+      background: #1e1e35; color: #9999bb; font-weight: 400; transition: all 0.15s;
+    }
+    .cor-btn.selected { font-weight: 700; }
+    .cor-tag { border-radius: 4px; padding: 2px 8px; font-size: 10px; font-weight: 700; display: inline-block; }
+
+    /* SP card header */
+    .sp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .sp-label { font-size: 10px; letter-spacing: 2px; }
+
+    /* Result */
+    .result { border-radius: 10px; padding: 18px; animation: fadeIn 0.3s ease; margin-top: 4px; }
+    .result-ok   { background: #16162a; border: 1px solid #660099; border-top: 3px solid #F47920; }
+    .result-err  { background: #1f0a0a; border: 1px solid #7f1d1d; border-top: 3px solid #ef4444; }
+    .result-title { font-size: 10px; letter-spacing: 3px; margin-bottom: 14px; }
+    .result-boxes { display: flex; gap: 8px; flex-wrap: wrap; }
+    .result-box { flex: 1; min-width: 70px; background: #0a0a18; border-radius: 8px; padding: 10px; text-align: center; }
+    .result-box-label { font-size: 9px; color: #6b6b9a; letter-spacing: 2px; margin-bottom: 4px; }
+    .result-box-value { font-weight: 700; font-size: 18px; color: #fff; }
+    .result-box-sub { font-size: 9px; margin-top: 2px; }
+    .cor-circle { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #2a2a45; margin: 0 auto 4px; }
+    .cor-name { font-weight: 700; font-size: 15px; }
+
+    /* Summary line */
+    .summary { font-size: 10px; color: #F47920; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <div id="header-inner">
+    <div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="badge badge-icomon">ICOMON</span>
+        <span class="badge badge-vivo">VIVO</span>
+      </div>
+      <h1>Localizador de Fibra</h1>
+      <div class="sub">DGOIC · SS · ANILHA · COR</div>
+    </div>
+    <div class="header-icon">🔦</div>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- Cores da Caixa -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-bar" style="background:#F47920"></div>
+      <div class="section-label" style="color:#F47920">CORES DA CAIXA</div>
+    </div>
+    <div class="card">
+      <div class="color-grid" id="cor-grid"></div>
+      <div class="summary" id="cor-summary" style="display:none">
+        <span id="cor-sequence"></span>
+        <button class="btn-clear" onclick="clearCores()">limpar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Splice Points -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-bar" style="background:#660099"></div>
+      <div class="section-label" style="color:#660099">SPLICE POINTS</div>
+    </div>
+    <div id="sp-list"></div>
+    <button class="btn-add" id="btn-add-sp" onclick="addSP()">+ Adicionar SP</button>
+  </div>
+
+  <!-- Busca -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-bar" style="background:#F47920"></div>
+      <div class="section-label" style="color:#F47920">BUSCA</div>
+    </div>
+    <div class="field-row" style="margin-bottom:12px">
+      <div>
+        <div class="field-label">Fibra Designada</div>
+        <input type="number" id="fd-input" class="input-large" placeholder="Ex: 23" min="1" max="64" onkeydown="if(event.key==='Enter') buscar()"/>
+      </div>
+      <div>
+        <div class="field-label">Nº do SP</div>
+        <input type="number" id="sp-input" class="input-large" placeholder="Ex: 42" onkeydown="if(event.key==='Enter') buscar()"/>
+      </div>
+    </div>
+    <button class="btn-search" onclick="buscar()">BUSCAR</button>
+  </div>
+
+  <!-- Resultado -->
+  <div id="resultado" style="display:none"></div>
+
+</div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────
+const CORES = ["VD","AM","BR","AZ","VM","VL","MR","RS","PT","CZ","LR","A.MAR"];
+const COR_VISUAL = {
+  VD:"#22c55e", AM:"#eab308", BR:"#d1d5db", AZ:"#3b82f6",
+  VM:"#ef4444", VL:"#a855f7", MR:"#78350f", RS:"#ec4899",
+  PT:"#374151", CZ:"#9ca3af", LR:"#f97316", "A.MAR":"#1e3a8a"
+};
+const COR_TEXT = {
+  VD:"#fff", AM:"#000", BR:"#000", AZ:"#fff",
+  VM:"#fff", VL:"#fff", MR:"#fff", RS:"#fff",
+  PT:"#fff", CZ:"#000", LR:"#000", "A.MAR":"#fff"
+};
+const LABEL_SP = ["Primária","Secundária","Terciária","Quaternária","Quinária"];
+
+// ── State ─────────────────────────────────────────────────────
+let selectedIdxs = new Set();
+let sps = [{ sp:"", start:"", end:"" }];
+
+// ── Color helpers ─────────────────────────────────────────────
+function getCaixaCores() {
+  return [...selectedIdxs].sort((a,b)=>a-b).map(i => CORES[i]);
+}
+
+function toggleCor(idx) {
+  selectedIdxs.has(idx) ? selectedIdxs.delete(idx) : selectedIdxs.add(idx);
+  renderCores();
+  renderSPs();
+  clearResultado();
+}
+
+function clearCores() {
+  selectedIdxs = new Set();
+  renderCores();
+  renderSPs();
+  clearResultado();
+}
+
+function renderCores() {
+  const grid = document.getElementById('cor-grid');
+  grid.innerHTML = '';
+  CORES.forEach((cor, idx) => {
+    const sel = selectedIdxs.has(idx);
+    const btn = document.createElement('button');
+    btn.className = 'cor-btn' + (sel ? ' selected' : '');
+    btn.textContent = cor;
+    btn.style.background = sel ? COR_VISUAL[cor] : '#1e1e35';
+    btn.style.borderColor = sel ? COR_VISUAL[cor] : '#2a2a45';
+    btn.style.color = sel ? COR_TEXT[cor] : '#9999bb';
+    btn.onclick = () => toggleCor(idx);
+    grid.appendChild(btn);
+  });
+  const caixaCores = getCaixaCores();
+  const summary = document.getElementById('cor-summary');
+  if (caixaCores.length > 0) {
+    summary.style.display = 'flex';
+    document.getElementById('cor-sequence').textContent =
+      caixaCores.join(' › ') + ' · ' + (caixaCores.length * 8) + ' fibras';
+  } else {
+    summary.style.display = 'none';
+  }
+}
+
+// ── SP Logic ──────────────────────────────────────────────────
+function getSpData() {
+  const caixaCores = getCaixaCores();
+  let offset = 0;
+  return sps.map((sp, i) => {
+    const start = parseInt(sp.start) || 0;
+    const end   = parseInt(sp.end)   || 0;
+    const numGroups = (start > 0 && end >= start) ? Math.ceil((end - start + 1) / 8) : 0;
+    const colors = caixaCores.slice(offset, offset + numGroups);
+    offset += numGroups;
+    return { ...sp, start, end, numGroups, colors, label: LABEL_SP[i] || `SP ${i+1}` };
+  });
+}
+
+function addSP() {
+  if (sps.length >= 5) return;
+  sps.push({ sp:"", start:"", end:"" });
+  renderSPs();
+}
+
+function removeSP(i) {
+  sps.splice(i, 1);
+  renderSPs();
+  clearResultado();
+}
+
+function updateSP(i, field, value) {
+  sps[i][field] = value;
+  renderSPs();
+  clearResultado();
+}
+
+function renderSPs() {
+  const spData = getSpData();
+  const list = document.getElementById('sp-list');
+  list.innerHTML = '';
+  spData.forEach((sp, i) => {
+    const isPrimary = i === 0;
+    const accentColor = isPrimary ? '#F47920' : '#9933CC';
+    const card = document.createElement('div');
+    card.className = 'card ' + (isPrimary ? 'card-primary' : 'card-secondary');
+
+    let colorTags = '';
+    sp.colors.forEach(cor => {
+      colorTags += `<span class="cor-tag" style="background:${COR_VISUAL[cor]};color:${COR_TEXT[cor]}">${cor}</span> `;
+    });
+
+    card.innerHTML = `
+      <div class="sp-header">
+        <div class="sp-label" style="color:${accentColor}">${LABEL_SP[i]?.toUpperCase()}</div>
+        ${i > 0 ? `<button class="btn-remove" onclick="removeSP(${i})">×</button>` : ''}
+      </div>
+      <div class="field-row" style="margin-bottom:${sp.colors.length ? '10px' : '0'}">
+        <div>
+          <div class="field-label">Nº SP</div>
+          <input type="number" value="${sp.sp}" placeholder="Ex: 25" oninput="updateSP(${i},'sp',this.value)"/>
+        </div>
+        <div>
+          <div class="field-label">Fibra Início</div>
+          <input type="number" value="${sp.start||''}" placeholder="Ex: 17" oninput="updateSP(${i},'start',this.value)"/>
+        </div>
+        <div>
+          <div class="field-label">Fibra Fim</div>
+          <input type="number" value="${sp.end||''}" placeholder="Ex: 56" oninput="updateSP(${i},'end',this.value)"/>
+        </div>
+      </div>
+      ${sp.colors.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap">${colorTags}</div>` : ''}
+    `;
+    list.appendChild(card);
+  });
+
+  const btnAdd = document.getElementById('btn-add-sp');
+  btnAdd.style.display = sps.length >= 5 ? 'none' : 'block';
+}
+
+// ── Search ────────────────────────────────────────────────────
+function getSSAnilha(fd) {
+  const ss = Math.ceil(fd / 8);
+  return { ss, anilha: fd - (ss - 1) * 8 };
+}
+
+function buscar() {
+  const fd    = parseInt(document.getElementById('fd-input').value);
+  const spNum = parseInt(document.getElementById('sp-input').value);
+  if (!fd || fd < 1 || fd > 64 || !spNum) return;
+
+  const spData = getSpData();
+  const found  = spData.find(s => parseInt(s.sp) === spNum);
+  const { ss, anilha } = getSSAnilha(fd);
+  const el = document.getElementById('resultado');
+  el.style.display = 'block';
+
+  if (!found) {
+    el.innerHTML = `
+      <div class="result result-err">
+        <div class="result-title" style="color:#ef4444">⚠ MANOBRA — FD ${fd} / SP ${spNum}</div>
+        <div class="result-boxes">
+          <div class="result-box" style="border:1px solid #66009933">
+            <div class="result-box-label">SS</div>
+            <div class="result-box-value">SS${ss}</div>
+          </div>
+          <div class="result-box" style="border:1px solid #66009933">
+            <div class="result-box-label">ANILHA</div>
+            <div class="result-box-value">${anilha}</div>
+          </div>
+          <div class="result-box" style="border:1px solid #7f1d1d;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:11px;color:#ef4444">SP não configurado</span>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  if (fd >= found.start && fd <= found.end && found.start > 0) {
+    const groupWithin = Math.floor((fd - found.start) / 8);
+    const cor = found.colors[groupWithin] || '?';
+    const glowColor = COR_VISUAL[cor] || '#fff';
+    el.innerHTML = `
+      <div class="result result-ok">
+        <div class="result-title" style="color:#F47920">✓ FD ${fd} / SP ${spNum}</div>
+        <div class="result-boxes">
+          <div class="result-box" style="border:1px solid #66009933">
+            <div class="result-box-label">SP</div>
+            <div class="result-box-value">${spNum}</div>
+            <div class="result-box-sub" style="color:#660099">${found.label}</div>
+          </div>
+          <div class="result-box" style="border:1px solid #66009933">
+            <div class="result-box-label">SS</div>
+            <div class="result-box-value">SS${ss}</div>
+          </div>
+          <div class="result-box" style="border:1px solid #66009933">
+            <div class="result-box-label">ANILHA</div>
+            <div class="result-box-value">${anilha}</div>
+          </div>
+          <div class="result-box" style="border:1px solid #2a2a45">
+            <div class="result-box-label">COR</div>
+            <div class="cor-circle" style="background:${glowColor};box-shadow:0 0 12px ${glowColor}66"></div>
+            <div class="cor-name" style="color:${glowColor}">${cor}</div>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div class="result result-err">
+        <div class="result-title" style="color:#ef4444">⚠ MANOBRA — FD ${fd} / SP ${spNum}</div>
+        <div class="result-boxes">
+          <div class="result-box" style="border:1px solid #66009933">
+            <div class="result-box-label">SP</div>
+            <div class="result-box-value">${spNum}</div>
+            <div class="result-box-sub" style="color:#9933CC">${found.label}</div>
+          </div>
+          <div class="result-box" style="border:1px solid #66009933">
+            <div class="result-box-label">SS</div>
+            <div class="result-box-value">SS${ss}</div>
+          </div>
+          <div class="result-box" style="border:1px solid #66009933">
+            <div class="result-box-label">ANILHA</div>
+            <div class="result-box-value">${anilha}</div>
+          </div>
+          <div class="result-box" style="border:1px solid #7f1d1d;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:11px;color:#ef4444">Sem cor</span>
+          </div>
+        </div>
+      </div>`;
+  }
+}
+
+function clearResultado() {
+  const el = document.getElementById('resultado');
+  el.style.display = 'none';
+  el.innerHTML = '';
+}
+
+// ── Init ──────────────────────────────────────────────────────
+renderCores();
+renderSPs();
+</script>
+</body>
+</html>
