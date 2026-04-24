@@ -103,6 +103,9 @@
     .color-grid { display: flex; flex-wrap: wrap; gap: 6px; }
     .cor-btn { border-radius: 6px; padding: 6px 11px; font-size: 12px; font-family: 'Courier New', monospace; border: 2px solid #3a3a5a; background: #1e1e35; color: #ddddff; font-weight: 600; transition: all 0.15s; }
     .cor-btn.selected { font-weight: 700; }
+    .cor-btn.disabled { cursor: not-allowed !important; }
+    .sp-range-warning { display:none; font-size:11px; color:#ff6666; font-weight:700; margin-top:6px; padding:5px 10px; background:#1f0a0a; border:1px solid #7f1d1d; border-radius:6px; }
+    #cor-warning { display: none; font-size: 11px; color: #f97316; font-weight: 700; margin-top: 8px; padding: 6px 10px; background: #1a0f00; border: 1px solid #7c3000; border-radius: 6px; }
     .cor-tag  { border-radius: 4px; padding: 3px 9px; font-size: 11px; font-weight: 700; display: inline-block; }
 
     /* ── SP card ── */
@@ -157,6 +160,14 @@
       font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
     }
     @keyframes slideUp { from { opacity:0; transform: translateX(-50%) translateY(20px); } to { opacity:1; transform: translateX(-50%) translateY(0); } }
+
+    #sp-range-warn-template { display: none; }
+    .range-warn { font-size: 10px; color: #f97316; font-weight: 700; margin-top: 6px;
+      padding: 5px 10px; background: #1a0f00; border: 1px solid #7c3000; border-radius: 6px; display: none; }
+    .range-warn.visible { display: block; }
+    .range-ok  { font-size: 10px; color: #22c55e; font-weight: 700; margin-top: 6px;
+      padding: 5px 10px; background: #0a1a0a; border: 1px solid #166534; border-radius: 6px; display: none; }
+    .range-ok.visible { display: block; }
     /* Install button */
     #btn-install-wrap { display: none; margin-bottom: 20px; }
     #btn-install-wrap.visible { display: block; }
@@ -202,21 +213,6 @@
 
 <div id="main">
 
-  <!-- Cores da Caixa -->
-  <div class="section">
-    <div class="section-title">
-      <div class="section-bar" style="background:#F47920"></div>
-      <div class="section-label" style="color:#F47920">CORES DA CAIXA</div>
-    </div>
-    <div class="card">
-      <div class="color-grid" id="cor-grid"></div>
-      <div class="summary" id="cor-summary" style="display:none">
-        <span id="cor-sequence"></span>
-        <button class="btn-clear" onclick="clearCores()">limpar</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Splice Points -->
   <div class="section">
     <div class="section-title">
@@ -225,6 +221,22 @@
     </div>
     <div id="sp-list"></div>
     <button class="btn-add" id="btn-add-sp" onclick="addSP()">+ Adicionar Primária</button>
+  </div>
+
+  <!-- Cores da Caixa -->
+  <div class="section">
+    <div class="section-title">
+      <div class="section-bar" style="background:#F47920"></div>
+      <div class="section-label" style="color:#F47920">CORES DA CAIXA</div>
+    </div>
+    <div class="card">
+      <div class="color-grid" id="cor-grid"></div>
+      <div id="cor-warning"></div>
+      <div class="summary" id="cor-summary" style="display:none">
+        <span id="cor-sequence"></span>
+        <button class="btn-clear" onclick="clearCores()">limpar</button>
+      </div>
+    </div>
   </div>
 
   <!-- Busca -->
@@ -302,11 +314,43 @@ function getCaixaCores() {
   return [...selectedIdxs].sort((a,b)=>a-b).map(i=>CORES[i]);
 }
 
+// Total color groups available based on all SP fiber ranges
+function getTotalGrupos() {
+  const sps = readSPsFromDOM();
+  let total = 0;
+  sps.forEach(sp => {
+    const start = parseInt(sp.start) || 0;
+    const end   = parseInt(sp.end)   || 0;
+    if (start > 0 && end >= start) total += Math.ceil((end - start + 1) / 8);
+  });
+  return total;
+}
+
 function toggleCor(idx) {
+  const maxGrupos = getTotalGrupos();
+  if (!selectedIdxs.has(idx)) {
+    // Trying to add — check limit
+    if (maxGrupos === 0) {
+      showCorWarning('Preencha as fibras dos SPs primeiro.');
+      return;
+    }
+    if (selectedIdxs.size >= maxGrupos) {
+      showCorWarning('Limite atingido: ' + maxGrupos + ' cor(es) para ' + (maxGrupos * 8) + ' fibras.');
+      return;
+    }
+  }
   selectedIdxs.has(idx) ? selectedIdxs.delete(idx) : selectedIdxs.add(idx);
   renderCores();
   refreshAllColorTags();
   clearResultado();
+}
+
+function showCorWarning(msg) {
+  const el = document.getElementById('cor-warning');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+  clearTimeout(window._corWarnTimer);
+  window._corWarnTimer = setTimeout(() => el.style.display = 'none', 3000);
 }
 
 function clearCores() {
@@ -318,24 +362,33 @@ function clearCores() {
 
 function renderCores() {
   const grid = document.getElementById('cor-grid');
+  const maxGrupos = getTotalGrupos();
   grid.innerHTML = '';
   CORES.forEach((cor, idx) => {
-    const sel = selectedIdxs.has(idx);
+    const sel      = selectedIdxs.has(idx);
+    const atLimit  = !sel && selectedIdxs.size >= maxGrupos && maxGrupos > 0;
+    const noSP     = !sel && maxGrupos === 0;
+    const disabled = atLimit || noSP;
     const btn = document.createElement('button');
-    btn.className = 'cor-btn' + (sel ? ' selected' : '');
+    btn.className = 'cor-btn' + (sel ? ' selected' : '') + (disabled ? ' disabled' : '');
     btn.textContent = cor;
-    btn.style.background  = sel ? COR_VISUAL[cor] : '#1e1e35';
-    btn.style.borderColor = sel ? COR_VISUAL[cor] : '#3a3a5a';
-    btn.style.color       = sel ? COR_TEXT[cor]   : '#ddddff';
+    btn.style.background  = sel ? COR_VISUAL[cor] : disabled ? '#141420' : '#1e1e35';
+    btn.style.borderColor = sel ? COR_VISUAL[cor] : disabled ? '#222233' : '#3a3a5a';
+    btn.style.color       = sel ? COR_TEXT[cor]   : disabled ? '#3a3a5a' : '#ddddff';
+    btn.style.cursor      = disabled ? 'not-allowed' : 'pointer';
+    btn.style.opacity     = disabled ? '0.4' : '1';
     btn.onclick = () => toggleCor(idx);
     grid.appendChild(btn);
   });
+
   const caixaCores = getCaixaCores();
   const summary = document.getElementById('cor-summary');
   if (caixaCores.length > 0) {
+    const used = caixaCores.length;
+    const max  = maxGrupos;
     summary.style.display = 'flex';
     document.getElementById('cor-sequence').textContent =
-      caixaCores.join(' › ') + ' · ' + (caixaCores.length * 8) + ' fibras';
+      caixaCores.join(' › ') + ' · ' + used + '/' + max + ' grupos · ' + (used * 8) + ' fibras';
   } else {
     summary.style.display = 'none';
   }
@@ -364,8 +417,58 @@ function getSpData() {
   });
 }
 
+function checkRangeWarn(i, start, end) {
+  const warn = document.getElementById(`range-warn-${i}`);
+  const ok   = document.getElementById(`range-ok-${i}`);
+  if (!warn || !ok) return;
+
+  if (!start || !end || end <= start) {
+    warn.classList.remove('visible');
+    ok.classList.remove('visible');
+    return;
+  }
+
+  // Limit to 64
+  if (end > 64) {
+    warn.textContent = '⚠ Fibra fim não pode passar de 64.';
+    warn.classList.add('visible');
+    ok.classList.remove('visible');
+    return;
+  }
+
+  if (start < 1) {
+    warn.textContent = '⚠ Fibra início não pode ser menor que 1.';
+    warn.classList.add('visible');
+    ok.classList.remove('visible');
+    return;
+  }
+
+  const total = end - start + 1;
+  const remainder = total % 8;
+
+  if (remainder !== 0) {
+    const grupos = Math.floor(total / 8);
+    const expected_end = start + (grupos + 1) * 8 - 1;
+    const expected_end2 = start + grupos * 8 - 1;
+    const sugestao = expected_end <= 64 ? `Use ${expected_end2 > 0 ? expected_end2 + ' ou ' : ''}${expected_end} como fim.` : `Use ${expected_end2} como fim.`;
+    warn.textContent = `⚠ ${total} fibras não fecha grupo de 8. ${sugestao}`;
+    warn.classList.add('visible');
+    ok.classList.remove('visible');
+  } else {
+    const grupos = total / 8;
+    ok.textContent = `✓ ${total} fibras · ${grupos} grupo${grupos > 1 ? 's' : ''} de 8`;
+    ok.classList.add('visible');
+    warn.classList.remove('visible');
+  }
+}
+
 function refreshAllColorTags() {
+  renderCores(); // re-evaluate disabled state based on current SP ranges
+  const sps = readSPsFromDOM();
   getSpData().forEach((sp, i) => {
+    // Validate range
+    checkRangeWarn(i, parseInt(sps[i]?.start)||0, parseInt(sps[i]?.end)||0);
+    // Update color tags
     const el = document.getElementById(`sp-tags-${i}`);
     if (!el) return;
     el.innerHTML = sp.colors.map(cor =>
@@ -407,13 +510,14 @@ function addSP() {
       </div>
       <div>
         <div class="field-label">Fibra Início</div>
-        <input type="number" placeholder="Ex: 17" oninput="refreshAllColorTags()"/>
+        <input type="number" placeholder="Ex: 17" min="1" max="64" oninput="onStartInput(this)"/>
       </div>
       <div>
         <div class="field-label">Fibra Fim</div>
-        <input type="number" placeholder="Ex: 56" oninput="refreshAllColorTags()"/>
+        <input type="number" placeholder="Ex: 56" min="1" max="64" oninput="onEndInput(this)"/>
       </div>
     </div>
+    <div class="sp-range-warning"></div>
     <div class="sp-tags" id="sp-tags-${i}"></div>
   `;
   list.appendChild(card);
@@ -440,6 +544,59 @@ function removeSP(btn) {
 function updateBtnLabel() {
   const count = document.querySelectorAll('.sp-card').length;
   document.getElementById('btn-add-sp').textContent = `+ Adicionar Primária ${count+1}`;
+}
+
+// ── Range validation ─────────────────────────────────────────
+function onStartInput(input) {
+  if (parseInt(input.value) > 64) input.value = 64;
+  validateRange(input.closest('.sp-card'));
+  refreshAllColorTags();
+}
+
+function onEndInput(input) {
+  // Cap at 64
+  if (parseInt(input.value) > 64) input.value = 64;
+  validateRange(input.closest('.sp-card'));
+  refreshAllColorTags();
+}
+
+function validateRange(card) {
+  const inputs  = card.querySelectorAll('input[type=number]');
+  const warning = card.querySelector('.sp-range-warning');
+  const start   = parseInt(inputs[1]?.value) || 0;
+  const end     = parseInt(inputs[2]?.value) || 0;
+
+  if (!start || !end || end <= start) {
+    warning.style.display = 'none';
+    return;
+  }
+
+  const total = end - start + 1;
+  if (total % 8 !== 0) {
+    // Try rounding up first, if exceeds 64 round down instead
+    const groupsUp   = Math.ceil(total / 8);
+    const correctUp  = start + (groupsUp * 8) - 1;
+    const groupsDown = Math.floor(total / 8);
+    const correctDown = start + (groupsDown * 8) - 1;
+
+    let suggestedEnd, suggestedGroups;
+    if (correctUp <= 64) {
+      suggestedEnd    = correctUp;
+      suggestedGroups = groupsUp;
+    } else {
+      suggestedEnd    = correctDown;
+      suggestedGroups = groupsDown;
+    }
+
+    if (suggestedGroups === 0) {
+      warning.textContent = `⚠ Range inválido: mínimo 8 fibras (1 grupo). Correto: ${start} a ${start + 7}`;
+    } else {
+      warning.textContent = `⚠ Range inválido: ${total} fibras não é múltiplo de 8. Correto: ${start} a ${suggestedEnd} (${suggestedGroups} grupo${suggestedGroups>1?'s':''})`;
+    }
+    warning.style.display = 'block';
+  } else {
+    warning.style.display = 'none';
+  }
 }
 
 // ── Search ────────────────────────────────────────────────────
