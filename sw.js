@@ -3,7 +3,7 @@
 //  Quando atualizar o app, mude só a data abaixo
 //  Ex: 2026-04-23  →  2026-05-01
 // ─────────────────────────────────────────────
-const CACHE_NAME = 'fibra-locator-2026-04-23';
+const CACHE_NAME = 'fibra-locator-2026-04-24';
 
 const ASSETS = [
   './index.html',
